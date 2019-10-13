@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "267763812622",
+    "firebase_url": "https://sacnitp-ee65b.firebaseio.com",
+    "project_id": "sacnitp-ee65b",
+    "storage_bucket": "sacnitp-ee65b.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:267763812622:android:2354a4b7dbb045fdaeef5f",
+        "android_client_info": {
+          "package_name": "com.sacnitp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "267763812622-59ulsa4d976ufute61elbv25pift548k.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.sacnitp",
+            "certificate_hash": "20fa7ecca4a174b90854e3347536eedabd2ebaad"
+          }
+        },
+        {
+          "client_id": "267763812622-0e7if4q7o68s366021pl7dscskpo5ihh.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC-1kF2mCeh5A_njgXtKp-ygY-t1NZSc7g"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "267763812622-fah1uhirv5h58ki1f7ajs9u07a28j2rh.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
