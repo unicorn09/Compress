@@ -37,12 +37,15 @@ import com.google.firebase.storage.OnProgressListener;
 import com.google.firebase.storage.StorageReference;
 import com.google.firebase.storage.UploadTask;
 
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 
 public class AddPost extends AppCompatActivity {
     private static final int PICK_IMAGE_REQUEST = 2;
     private static final int GALLERY_REQUEST = 9;
     String name_user;
+    String s;
     DatabaseReference db, db1;
     TextView textView_name;
     EditText edittext_post;
@@ -52,6 +55,7 @@ public class AddPost extends AppCompatActivity {
     Uri uri;
     StorageReference mStorageRef;
     String key;
+    FileInputStream fileInputStream;
     ProgressDialog prgd;
 
     @Override
@@ -116,7 +120,13 @@ public class AddPost extends AppCompatActivity {
         if (requestCode == GALLERY_REQUEST && resultCode == RESULT_OK) {
 
             uri = data.getData();
-            camera.setImageURI(uri);
+            compress obj=new compress(this);
+            s=obj.compressImage(uri);
+
+            Toast.makeText(this,s,Toast.LENGTH_SHORT).show();
+            uri=Uri.fromFile(new File(s));
+            Toast.makeText(this, uri.toString(), Toast.LENGTH_LONG).show();
+//            camera.setImageBitmap();
 
         }
     }
@@ -129,8 +139,12 @@ public class AddPost extends AppCompatActivity {
             progressDialog.show();
 
             final StorageReference sRef = mStorageRef.child("post").child(uri.getLastPathSegment());
-
-            sRef.putFile(uri)
+            try{
+                fileInputStream=new FileInputStream(new File(s));
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            sRef.putStream(fileInputStream)
                     .addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
                         @Override
                         public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {

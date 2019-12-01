@@ -1,24 +1,25 @@
 package com.sacnitp;
 
 import android.content.Context;
+import android.content.Intent;
 import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.PopupWindow;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 
 import java.util.ArrayList;
 
 public class Model_Adapter extends RecyclerView.Adapter<Model_Adapter.MyViewholder> {
     Context context;
     ArrayList<Model> post;
+    private PopupWindow popupWindow;
+    private String poi;
 
     public Model_Adapter(Context c, ArrayList<Model> p) {
         context = c;
@@ -35,7 +36,17 @@ public class Model_Adapter extends RecyclerView.Adapter<Model_Adapter.MyViewhold
     public void onBindViewHolder(@NonNull MyViewholder holder, int i) {
         holder.name.setText(post.get(i).getUsername());
         holder.desc.setText(post.get(i).getDesc());
-        Glide.with(context).load(post.get(i).getImageurl()).into(holder.imageView);
+        poi=post.get(i).getImageurl();
+        Glide.with(context).load(poi).into(holder.imageView);
+        holder.imageView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i=new Intent(context, image.class);
+                i.putExtra("Image",poi);
+                context.startActivity(i);
+                //popupWindow.showAtLocation(linearLayout1, Gravity.CENTER, 0, 0);
+            }
+        });
     }
 
     @Override

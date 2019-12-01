@@ -5,10 +5,14 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.Signature;
 import android.support.annotation.NonNull;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +21,12 @@ import android.view.WindowManager;
 import android.widget.Button;
 
 import android.widget.Toast;
+
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
+import com.facebook.login.LoginResult;
+import com.facebook.login.widget.LoginButton;
 import com.google.android.gms.auth.api.Auth;
 import com.google.android.gms.auth.api.signin.GoogleSignInAccount;
 import com.google.android.gms.auth.api.signin.GoogleSignInOptions;
@@ -36,15 +46,26 @@ import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.ValueEventListener;
+import com.facebook.FacebookSdk;
+import com.facebook.appevents.AppEventsLogger;
+
+import java.math.BigDecimal;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
+import java.util.Currency;
 
 public class Login extends AppCompatActivity {
-
+    private static final String EMAIL = "email";
     private static final int RC_SIGN_IN = 101;
-    Button googleSignUp;String name2;
+    Button googleSignUp;
+    LoginButton fblogin;
+    String name2;
     private FirebaseAuth auth;
     private FirebaseAuth.AuthStateListener authStateListener;
     private GoogleApiClient mGoogleApiClient;
     ProgressDialog progressDialog;
+    private CallbackManager callbackManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -56,15 +77,16 @@ public class Login extends AppCompatActivity {
         setContentView(R.layout.activity_login);
         getSupportActionBar().hide();
 
-        googleSignUp = findViewById(R.id.btn_login);
 
+
+        googleSignUp = findViewById(R.id.btn_login);
         auth = FirebaseAuth.getInstance();
         progressDialog = new ProgressDialog(this);
         progressDialog.setCanceledOnTouchOutside(false);
         progressDialog.setCancelable(false);
 
-        DatabaseReference daa=FirebaseDatabase.getInstance().getReference();
-        Log.i("harsh",daa.toString());
+        DatabaseReference daa = FirebaseDatabase.getInstance().getReference();
+        Log.i("harsh", daa.toString());
         GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
                 .requestIdToken(getString(R.string.default_web_client_id))
                 .requestEmail()
@@ -75,10 +97,10 @@ public class Login extends AppCompatActivity {
                     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
                         progressDialog.dismiss();
-                        Log.e("connection failed",connectionResult.getErrorMessage());
+                        Log.e("connection failed", connectionResult.getErrorMessage());
                         Toast.makeText(getApplicationContext(), "Connection failed", Toast.LENGTH_SHORT).show();
                     }
-                } )
+                })
                 .addApi(Auth.GOOGLE_SIGN_IN_API, gso)
                 .build();
 
@@ -90,7 +112,9 @@ public class Login extends AppCompatActivity {
                 signIn();
             }
         });
+
     }
+
     private void signIn() {
         Intent signInIntent = Auth.GoogleSignInApi.getSignInIntent(mGoogleApiClient);
         startActivityForResult(signInIntent, RC_SIGN_IN);
@@ -104,16 +128,19 @@ public class Login extends AppCompatActivity {
 
         if (requestCode == RC_SIGN_IN) {
             progressDialog.setMessage("Signing you in...");
-              GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
+            //progressDialog.show(EntryPage1.this, "", "Signing you in...");
+            GoogleSignInResult result = Auth.GoogleSignInApi.getSignInResultFromIntent(data);
 
             if (result.isSuccess()) {
+                // Google Sign In was successful, authenticate with Firebase
                 GoogleSignInAccount account = result.getSignInAccount();
                 firebaseAuthWithGoogle(account);
                 mGoogleApiClient.clearDefaultAccountAndReconnect();
 
             }
             else {
-
+                // Google Sign In failed, update UI appropriately
+                // ...
                 progressDialog.dismiss();
                 Toast.makeText(getApplicationContext(), " Connection failed", Toast.LENGTH_SHORT).show();
             }
@@ -127,8 +154,10 @@ public class Login extends AppCompatActivity {
                 .addOnCompleteListener(this, new OnCompleteListener<AuthResult>() {
                     @Override
                     public void onComplete(@NonNull Task<AuthResult> task) {
+                        Log.d("Login Page", "signInWithCredential:onComplete:" + task.isSuccessful());
 
                         if (!task.isSuccessful()) {
+                            Log.w("Login Page", "signInWithCredential", task.getException());
 
                             Toast.makeText(getApplicationContext(), "Something went wrong\n" + task.getException().getMessage(),
                                     Toast.LENGTH_SHORT).show();
@@ -145,7 +174,7 @@ public class Login extends AppCompatActivity {
                 });
     }
     private void checkingUserExist(String UID) {
-        Log.e("payraj",UID);
+        Log.e("Harsh--------->",UID);
         DatabaseReference db = FirebaseDatabase.getInstance().getReference().child("users");
 
         db.child(UID).addListenerForSingleValueEvent(new ValueEventListener() {
@@ -162,7 +191,7 @@ public class Login extends AppCompatActivity {
                     String photo = "";
                     try{
                         mailid = auth.getCurrentUser().getEmail();
-                        name = auth.getCurrentUser().getDisplayName().toUpperCase();
+                        name = auth.getCurrentUser().getDisplayName();
                         photo = auth.getCurrentUser().getPhotoUrl().toString();
                     }
                     catch (Exception e){
@@ -195,14 +224,14 @@ public class Login extends AppCompatActivity {
     }
     public void createNewUser( String mailid, String name, String photo) {
         String key = auth.getCurrentUser().getUid();
-        Log.e("payraj",key);
-        DatabaseReference db = FirebaseDatabase.getInstance().getReference().child("Users").child(key);
-        db.child("Email").setValue(mailid);
-        db.child("Username").setValue(name);
-        db.child("UID").setValue(key);
+        Log.e("Harsh-------->",key);
+        DatabaseReference db = FirebaseDatabase.getInstance().getReference().child("USERS").child(key);
+        db.child("user").setValue(mailid);
+        db.child("USER_name").setValue(name);
+        db.child("USER_USER_UID").setValue(key);
 
 
-        db.child("imgurl").setValue(photo);
+        db.child("USER_IMAGE").setValue(photo);
         db.addListenerForSingleValueEvent(new ValueEventListener() {
             @Override
             public void onDataChange(DataSnapshot dataSnapshot) {
@@ -233,6 +262,35 @@ public class Login extends AppCompatActivity {
                         Log.e("Verify dialog true",user.isEmailVerified()+"" );
                         secondActivity();
                         finish();
+                    }else {
+                        //TODO have a snack bar here
+                        Log.e("Verify Image dialog",user.isEmailVerified()+"" );
+                        AlertDialog.Builder alertDialog;
+                        alertDialog = new AlertDialog.Builder(Login.this);
+
+                        // Setting Dialog Message
+                        alertDialog.setMessage("Please Verify Your Email..");
+
+                        // Setting Icon to Dialog
+                        //  alertDialog.setIcon(R.drawable.ic_info);
+
+                        // Setting Positive "Yes" Button
+                        alertDialog.setPositiveButton("Resend Email", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog,int which) {
+
+                                auth.getCurrentUser().sendEmailVerification();
+
+                            }
+                        });
+                        alertDialog.setNegativeButton("NO", new DialogInterface.OnClickListener() {
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.cancel();
+                            }
+                        });
+
+                        // Showing Alert Message
+                        AlertDialog alertDialog1 = alertDialog.create();
+                        alertDialog1.show();
                     }
                 }
             }
@@ -243,19 +301,38 @@ public class Login extends AppCompatActivity {
     @Override
     public void onResume() {
 
+        Log.e("LoginActivity--", "sted");
+
         authStateListener = new FirebaseAuth.AuthStateListener() {
             @Override
             public void onAuthStateChanged(@NonNull FirebaseAuth firebaseAuth) {
                 FirebaseUser user = firebaseAuth.getCurrentUser();
                 if (user != null) {
+                    Log.e("USERUID----",auth.getCurrentUser().getUid());
                     if(user.isEmailVerified()) {
-
+                        Log.e("Verify dialog true",user.isEmailVerified()+"" );
+                        // Intent intent = new Intent(getApplicationContext(), RegisterActivity.class);
+                        //startActivity(intent);
                         finish();
-
+                        /*nextActivity();
+                        finish();*/
                     }
                     else {
+                        Log.e("Verify Image dialog",user.isEmailVerified()+"" );
                         Dialog mdialog = new Dialog(getApplicationContext());
+                        // mdialog.setContentView(R.layout.pop_up_sac);
                         mdialog.getWindow().setLayout(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        //TextView message = mdialog.findViewById(R.id.message_edittext);
+                       /* message.setText("Please Verify Your Email First");
+                        Button resend = mdialog.findViewById(R.id.yes_btn);
+                        resend.setText("Resend");*/
+
+                       /* resend.setOnClickListener(new View.OnClickListener() {
+                            @Override
+                            public void onClick(View v) {
+                                auth.getCurrentUser().sendEmailVerification();
+                            }
+                        });*/
 
                     }
                 }
@@ -266,10 +343,11 @@ public class Login extends AppCompatActivity {
     }
     @Override
     public void onStop() {
+
+        Log.e("LoginActivity--", "stoped");
         if (authStateListener != null) {
             auth.removeAuthStateListener(authStateListener);
         }
         super.onStop();
     }
 }
-
